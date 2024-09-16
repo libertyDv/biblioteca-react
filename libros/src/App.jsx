@@ -1,35 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { getBooks } from './services/books';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [books, setBooks] = useState([]);
+  const [readingList, setReadingList] = useState([])
+
+  useEffect(() => {
+
+    const fetchBooks = async () => {
+      const data = await getBooks()
+      setBooks(data)
+    }
+
+    fetchBooks()
+  }, [])
+
+  // some -> comprueba si al menos un elemento del array cumple con la condicion
+
+  const addToList = (book) => {
+    if(!readingList.some((item) => item.id === book.id)) {
+      setReadingList([...readingList, book])
+    }
+  }
+
+
+
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <main>
+        <h1>Books</h1>
+        <ul>
+          {books.map((book) => (
+            <li key={book.id}>
+              <h3>{book.title}</h3>
+              <p>{book.releaseDate}</p>
+              <button onClick={() => addToList(book)}>Add to read list</button>
+            </li>
+          ))
+          }
+        </ul>
+
+        <section>
+          <h2>Reading list</h2>
+          <ul>
+            {readingList.map((book) => (
+              <li key={book.id}>
+                <h3>{book.title}</h3>
+                <p>{book.releaseDate}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
