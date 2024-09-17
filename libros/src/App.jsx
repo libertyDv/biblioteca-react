@@ -13,6 +13,54 @@ function App() {
   const [readingList, setReadingList] = useState([]);
   const { filterBooks } = useFilters()
 
+
+  // cargar lista de lectura desde localStorage cuando se monta el componente
+
+  useEffect(() => {
+    const storedReadingList = localStorage.getItem('readingList')
+    const storagedBooks = localStorage.getItem('books')
+    
+    if (storedReadingList) {
+      setReadingList(JSON.parse(storedReadingList)) // convierte de JSON a array
+    }
+
+    if(storagedBooks) {
+      try {
+        setBooks(JSON.parse(storagedBooks));  // Intentar parsear solo si es JSON válido
+      } catch (error) {
+        console.error('Error parsing books from localStorage:', error);
+        // En caso de error, podrías fallback para cargar los libros
+        setBooks([]); 
+      }
+    }
+
+  }, [])
+
+  // guardar la lista de lectura en localStorage cada vez q cambia
+  useEffect(() => {
+    localStorage.setItem('readingList', JSON.stringify(readingList))
+  }, [readingList])
+
+  // sincronizar la lista de lectura entre pestañas
+  useEffect(() => {
+    const syncReadingListAndBooks = (event) => {
+      if (event.key === 'readingList') {
+        const newReadingList = JSON.parse(event.newValue);
+        setReadingList(newReadingList);
+      }
+      if (event.key === 'books') {
+        const newBooks = JSON.parse(event.newValue);
+        setBooks(newBooks);
+      }
+    };
+  
+    window.addEventListener('storage', syncReadingListAndBooks);
+  
+    return () => {
+      window.removeEventListener('storage', syncReadingListAndBooks);
+    };
+  }, []);
+
   useEffect(() => {
     const fetchBooks = async () => {
       const data = await getBooks();
@@ -23,20 +71,27 @@ function App() {
     fetchBooks();
   }, []);
 
+
   const filteredBooks = filterBooks(books)
 
   return (
     <>
       <main>
-        <Filters/>
+        <Filters />
         <h1>Books</h1>
         <ul>
           {filteredBooks.map((book) => (
             <li key={book.title + book.releaseDate}> {/* combino estas 2 propiedades para hacer una key única */}
               <h3>{book.title}</h3>
               <p>{book.releaseDate}</p>
-              <button 
-                onClick={() => addToList(book, setReadingList, isBookInList(book, readingList))}
+              <img src={book.cover}
+                alt={book.title}></img> <br></br>
+              <button
+                onClick={() => addToList(book,
+                  setReadingList,
+                  isBookInList(book, readingList),
+                  setBooks // modifico la lista de disponibles
+                )}
               >
                 {isBookInList(book, readingList) ? '✔ Added' : 'Add to read list'}
               </button>
@@ -49,6 +104,8 @@ function App() {
           {readingList.map((book) => (
             <li key={book.title + book.releaseDate}> {/* Uso de combinación de propiedades para clave */}
               <h3>{book.title}</h3>
+              <img src={book.cover}
+                alt={book.title}></img> <br></br>
             </li>
           ))}
         </ul>
